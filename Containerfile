@@ -38,6 +38,26 @@ RUN dnf install -y --allowerasing \
     vulkan-loader.i686 \
     && dnf clean all
 
+# ---------------------------------------------------------
+# ETAPA 4: Geração de Chaves MOK e Compilação dos Módulos
+# ---------------------------------------------------------
+RUN dnf install -y ublue-os-akmods-addons kmodtool akmods mokutil openssl && \
+    kmodgenca -a && \
+    akmods --force --kernels $(ls /lib/modules)
+
+# ---------------------------------------------------------
+# ETAPA 5: Bloquear o Nouveau e Reconstruir o Initramfs
+# ---------------------------------------------------------
+RUN mkdir -p /etc/cmdline.d && \
+    echo "rd.driver.blacklist=nouveau modprobe.blacklist=nouveau nvidia-drm.modeset=1" > /etc/cmdline.d/nvidia-legacy-580xx.conf && \
+    dracut -fv --regenerate-all
+
+# ---------------------------------------------------------
+# ETAPA 6: Configurar o NVIDIA Container Toolkit
+# ---------------------------------------------------------
+RUN nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml && \
+    systemctl disable ublue-nvctk-cdi.service
+
 ### [IM]MUTABLE /opt
 ## Some bootable images, like Fedora, have /opt symlinked to /var/opt, in order to
 ## make it mutable/writable for users. However, some packages write files to this directory,
