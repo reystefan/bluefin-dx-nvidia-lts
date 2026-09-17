@@ -5,6 +5,7 @@ COPY system_files /system_files
 
 # Base Image
 FROM ghcr.io/ublue-os/bluefin-dx-main:44
+
 # FROM ghcr.io/ublue-os/bazzite:stable@sha256:9556db65991d57a03a7dc18e4ba28a686d8bcdcd6b61235aa69c8267bb22ff76
 ## Other possible base images include:
 # FROM ghcr.io/ublue-os/bazzite:testing
@@ -15,6 +16,27 @@ FROM ghcr.io/ublue-os/bluefin-dx-main:44
 # Universal Blue Images: https://github.com/orgs/ublue-os/packages
 # Fedora base image: quay.io/fedora/fedora-bootc:44
 # CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
+
+# ---------------------------------------------------------
+# ETAPA 2 e 3: Adicionar repositórios e instalar drivers 580
+# ---------------------------------------------------------
+
+# Baixar os repositórios do RPMFusion
+RUN curl -o /etc/yum.repos.d/rpmfusion-free.repo https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free.repo && \
+    curl -o /etc/yum.repos.d/rpmfusion-nonfree.repo https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree.repo && \
+    curl -o /etc/yum.repos.d/rpmfusion-nonfree-updates.repo https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-updates.repo
+
+# Instalar os drivers legados e bibliotecas de 32 bits (para jogos/compatibilidade)
+RUN dnf install -y --allowerasing \
+    akmod-nvidia-580xx \
+    xorg-x11-drv-nvidia-580xx \
+    xorg-x11-drv-nvidia-580xx-cuda \
+    libva-nvidia-driver \
+    mesa-vulkan-drivers \
+    mesa-vulkan-drivers.i686 \
+    vulkan-loader \
+    vulkan-loader.i686 \
+    && dnf clean all
 
 ### [IM]MUTABLE /opt
 ## Some bootable images, like Fedora, have /opt symlinked to /var/opt, in order to
